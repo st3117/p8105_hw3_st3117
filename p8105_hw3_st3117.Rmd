@@ -21,7 +21,7 @@ theme_set(theme_bw() + theme(legend.position = "bottom"))
 
 ## Problem 1_1 BRFSS Data Cleaning
 
-```{r}
+```{r Problem 1_1}
 
 brfss = 
   brfss_smart2010 %>% 
@@ -34,4 +34,26 @@ brfss =
 brfss
 
 ```
+
+## Problem 1_2 Answering Questions
+
+```{r Problem 1_2}
+
+brfss %>% 
+  spread(key = response, value = data_value) %>% 
+  janitor::clean_names() %>% 
+  filter(year == 2002) %>% 
+  group_by(state) %>% 
+  summarize(n = n()) %>% 
+  filter(n == 7)
+
+```
+
+## Problem 1_3 Spaghetti Plot showing the number of observations in each state from 2002 to 2010s
+
+```{r}
+
+```
+
+
 
