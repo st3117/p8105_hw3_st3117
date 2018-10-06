@@ -71,5 +71,17 @@ brfss %>%
 
 ```
 
+## Problem 1_4 NY State “Excellent” responses
+
+```{r Problem 1_4}
+
+brfss %>%
+  filter(state == "NY" & response == "Excellent") %>% 
+  filter(year == 2002 | year == 2006 | year == 2010) %>%
+  group_by(county) %>%
+  summarize(mean_prop = mean(data_value),
+            sd_prop = sd(data_value))
+
+```
 
 
