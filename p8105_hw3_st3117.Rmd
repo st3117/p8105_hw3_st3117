@@ -87,7 +87,7 @@ brfss %>%
 
 ## Problem 1_5  Five-panel plot showing the distribution of state-level averages over time
 
-```{r}
+```{r Problem 1_5}
 
 brfss %>% 
   group_by(year, state, response) %>% 
@@ -123,9 +123,16 @@ instacart %>%
 
 ```{r Problem 2_2}
 
-
+instacart %>%
+  group_by(aisle) %>%
+  summarize(n_obs = n()) %>% 
+  ggplot(aes(x = aisle, y = n_obs)) +
+    geom_point() +
+    theme(axis.text.x = element_text(size = 4, hjust = 1, angle = 45))
 
 ```
+
+
 
 
 
