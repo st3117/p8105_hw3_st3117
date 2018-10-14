@@ -25,9 +25,13 @@ brfss =
   filter(topic == "Overall Health") %>% 
   separate(locationdesc, into = c("remove2", "county"), sep = 5) %>% 
   select(year, state = locationabbr, county, response, data_value) %>% 
-  mutate(response = as.factor(response))
+  mutate(response = as.factor(response),
+         response = factor(response, levels = c("Excellent", "Very good", "good", "Fair", "Poor")))
+
+levels(brfss$response)
 
 brfss
+
 
 ```
 
