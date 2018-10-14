@@ -107,9 +107,9 @@ brfss %>%
 
 ```
 
-## Problem 2_1  Five-panel plot showing the distribution of state-level averages over time
+## Problem 2_2  Five-panel plot showing the distribution of state-level averages over time
 
-```{r Problem 2_1}
+```{r Problem 2_2}
 
 instacart = instacart
 
@@ -128,9 +128,9 @@ instacart %>%
 
 ```
 
-## Problem 2_2 Make a plot that shows the number of items ordered in each aisle
+## Problem 2_3 Make a plot that shows the number of items ordered in each aisle
 
-```{r Problem 2_2, fig.width = 10, fig.height = 20}
+```{r Problem 2_3, fig.width = 10, fig.height = 20}
 
 instacart %>%
   group_by(aisle) %>%
@@ -148,9 +148,9 @@ instacart %>%
 
 ```
 
-## Problem 2_3 Make a table showing the most popular item in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
+## Problem 2_4 Make a table showing the most popular item in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
 
-```{r Problem 2_3}
+```{r Problem 2_4}
 
 instacart %>% 
   filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
@@ -168,9 +168,9 @@ instacart %>%
 
 ```
 
-## Problem 2_4 Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
+## Problem 2_5 Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
 
-```{r Problem 2_4}
+```{r Problem 2_5}
 
 instacart %>% 
   filter(product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
@@ -181,8 +181,100 @@ instacart %>%
 
 ```
 
+## Problem 3_1
+
+```{r Problem 3_1}
+
+ny_noaa = ny_noaa
+
+ny_noaa = ny_noaa %>% 
+  mutate(year = strftime(date, "%Y"),
+         month = strftime(date, "%B"),
+         day = strftime(date, "%d"),
+         prcp = prcp / 10,
+         snow = as.numeric(snow),
+         snwd = as.numeric(snwd),
+         tmax = as.numeric(tmax) / 10,
+         tmin = as.numeric(tmin) / 10) %>% 
+  select(id, year, month, day, prcp_mm = prcp, snow_mm = snow, snwd_mm = snwd, tmax_c = tmax, tmin_c = tmin)
 
 
 
+```
+
+## Problem 3_2
+
+```{r Problem 3_2}
+
+ny_noaa %>% 
+  group_by(snow_mm) %>% 
+  summarize(n_obs = n()) %>% 
+  arrange(-n_obs) %>% 
+  head(1)
+
+ny_noaa %>% 
+  group_by(month) %>% 
+  summarize(mean_snow = median(snow_mm, na.rm = TRUE))
+
+
+```
+
+## Problem 3_3 Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
+
+```{r Problem 3_3, out.width="800px", out.height="800px"}
+
+ny_noaa %>% 
+  filter(month == "January" | month == "July") %>% 
+  group_by(id, month) %>% 
+  summarize(mean_tmax = mean(tmax_c, na.rm = TRUE)) %>% 
+  filter(!is.na(mean_tmax)) %>% 
+  ggplot(aes(x = id, y = mean_tmax)) +
+    geom_point() +
+    facet_grid(month ~ .) +
+    theme(axis.text.x = element_text(size = 4, hjust = 1, angle = 45)) +
+    labs(
+      title = "Average Max Temperature in January and in July",
+      x = "Station ID",
+      y = "Average Max Temperature"
+      )
+
+ny_noaa %>% 
+  filter(month == "January" | month == "July") %>% 
+  group_by(id, month) %>% 
+  summarize(mean_tmax = mean(tmax_c, na.rm = TRUE)) %>% 
+  filter(!is.na(mean_tmax)) %>% 
+  ggplot(aes(x = month, y = mean_tmax)) +
+    geom_boxplot()
+
+is_outlier = function(x) {
+  return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
+}
+
+ny_noaa %>% 
+  filter(month == "January" | month == "July") %>% 
+  group_by(id, month) %>% 
+  summarize(mean_tmax = mean(tmax_c, na.rm = TRUE)) %>% 
+  filter(!is.na(mean_tmax)) %>% 
+  group_by(month) %>% 
+  mutate(outlier = ifelse(is_outlier(mean_tmax), mean_tmax, as.numeric(NA))) %>% 
+  filter(!is.na(outlier)) %>% 
+  arrange(month)
+    
+
+```
+
+## Problem 3_4 Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); 
+
+```{r Problem 3_4}
+
+
+
+```
+
+## Problem 3_5 and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+
+```{r Problem 3_5}
+
+```
 
 
