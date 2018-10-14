@@ -26,12 +26,11 @@ brfss =
   separate(locationdesc, into = c("remove2", "county"), sep = 5) %>% 
   select(year, state = locationabbr, county, response, data_value) %>% 
   mutate(response = as.factor(response),
-         response = factor(response, levels = c("Excellent", "Very good", "good", "Fair", "Poor")))
+         response = factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor")))
 
 levels(brfss$response)
 
 brfss
-
 
 ```
 
@@ -98,7 +97,13 @@ brfss %>%
   summarize(mean_prop = mean(data_value, na.rm = TRUE)) %>% 
   ggplot(aes(x = year, y = mean_prop, color = state)) +
     geom_line() +
-    facet_grid(. ~ response)
+    facet_grid(. ~ response) +
+    labs(
+      title = "Distribution of State-level Response over time",
+      x = "Year",
+      y = "Mean Response Proportion"
+      ) +
+    theme(axis.text.x = element_text(hjust = 1, angle = 45))
 
 ```
 
@@ -110,29 +115,69 @@ instacart = instacart
 
 ## How many aisles are there, and which aisles are the most items ordered from?
 
-count(distinct(instacart, aisle)) 
+count(distinct(instacart, aisle_id)) 
   
 instacart %>%
-  summarize(n = n_distinct(aisle))
+  summarize(n = n_distinct(aisle_id))
 
 instacart %>%
   group_by(aisle) %>%
   summarize(n_obs = n()) %>% 
   arrange(-n_obs) %>% 
-  head(1)
+  filter(row_number() == 1)
 
 ```
 
 ## Problem 2_2 Make a plot that shows the number of items ordered in each aisle
 
-```{r Problem 2_2}
+```{r Problem 2_2, fig.width = 10, fig.height = 20}
 
 instacart %>%
   group_by(aisle) %>%
   summarize(n_obs = n()) %>% 
-  ggplot(aes(x = aisle, y = n_obs)) +
+  mutate(group = as.numeric(cut_number(n_obs, 3))) %>% 
+  ggplot(aes(x = reorder(aisle, n_obs), y = n_obs)) +
     geom_point() +
-    theme(axis.text.x = element_text(size = 4, hjust = 1, angle = 45))
+    facet_wrap(group ~ ., nrow = 3, scales = "free") +
+    theme(axis.text.x = element_text(size = 8, hjust = 1, angle = 45)) +
+    labs(
+      title = "Number of Items Ordered in Aisles",
+      x = "Aisle Name",
+      y = "Number of Items Ordered"
+      )
+
+```
+
+## Problem 2_3 Make a table showing the most popular item in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
+
+```{r Problem 2_3}
+
+instacart %>% 
+  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
+  group_by(aisle, product_name) %>% 
+  summarize(n_obs = n()) %>%
+  summarize(max_product = max(n_obs))
+            
+instacart %>% 
+  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
+  group_by(aisle, product_name) %>% 
+  summarize(n_obs = n()) %>% 
+  arrange(aisle, -n_obs) %>% 
+  filter(row_number() == 1) %>% 
+  knitr::kable()
+
+```
+
+## Problem 2_4 Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table)
+
+```{r Problem 2_4}
+
+instacart %>% 
+  filter(product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
+  group_by(product_name, order_dow) %>% 
+  summarize(mean_hour = mean(order_hour_of_day, na.rm = TRUE)) %>% 
+  spread(key = product_name, value = mean_hour) %>% 
+  knitr::kable(digits = 2)
 
 ```
 
