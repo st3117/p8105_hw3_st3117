@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggridges)
 library(patchwork)
+library(hexbin)
 library(p8105.datasets)
 
 ```
@@ -263,17 +264,40 @@ ny_noaa %>%
 
 ```
 
-## Problem 3_4 Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); 
+## Problem 3_4 Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+
 
 ```{r Problem 3_4}
 
-
+tmax_tmin_p = ggplot(ny_noaa, aes(x = tmax_c, y = tmin_c)) + 
+                geom_hex() +
+                labs(
+                  title = "tmax vs tmin",
+                  x = "tmax",
+                  y = "tmin"
+                  )
 
 ```
 
-## Problem 3_5 and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
-
+## Problem 3_5 and 
 ```{r Problem 3_5}
+
+snow_dist_p = ny_noaa %>% 
+                filter(snow_mm > 0 & snow_mm < 100) %>% 
+                ggplot(aes(x = year, y = snow_mm)) +
+                  geom_violin() +
+                  theme(axis.text.x = element_text(size = 8, hjust = 1, angle = 45)) +
+                  labs(
+                    title = "Distribution of Snowfall",
+                    x = "Year",
+                    y = "Snowfall in mm"
+                    )
+
+```
+
+```{r}
+
+tmax_tmin_p / snow_dist_p
 
 ```
 
