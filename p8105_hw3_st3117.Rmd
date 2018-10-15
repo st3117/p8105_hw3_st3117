@@ -9,11 +9,12 @@ output: github_document
 
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(ggridges)
 library(patchwork)
 library(hexbin)
+library(ggridges)
 library(p8105.datasets)
 
+theme_set(theme_bw())
 ```
 
 ## Problem 1_1 BRFSS data cleaning
@@ -24,8 +25,8 @@ brfss =
   brfss_smart2010 %>% 
   janitor::clean_names() %>%
   filter(topic == "Overall Health") %>% 
-  separate(locationdesc, into = c("remove2", "county"), sep = 5) %>% 
-  select(year, state = locationabbr, county, response, data_value) %>% 
+  separate(locationdesc, into = c("remove", "county"), sep = 5) %>% 
+  select(year, state = locationabbr, county, response, data_value, everything(), -remove) %>% 
   mutate(response = as.factor(response),
          response = factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor")))
 
@@ -40,12 +41,23 @@ levels(brfss$response)
 ```{r Problem 1_2}
 
 brfss %>% 
-  spread(key = response, value = data_value) %>% 
-  janitor::clean_names() %>% 
   filter(year == 2002) %>% 
   group_by(state) %>% 
-  summarize(n = n()) %>% 
-  filter(n == 7)
+  summarize(n = n_distinct(county)) %>% 
+  ggplot(aes(x = reorder(state, n), y = n)) +
+    geom_point() +
+    labs(
+      title = "Number of Observations Plot",
+      x = "States",
+      y = "Number of Observations"
+      ) +
+    theme(axis.text.x = element_text(size = 8, hjust = 1, angle = 45))
+
+brfss %>% 
+  filter(year == 2002) %>% 
+  group_by(state) %>% 
+  summarize(n = n_distinct(county)) %>% 
+  summarize(mean_n = mean(n, na.rm = TRUE))
 
 brfss %>% 
   filter(year == 2002) %>% 
@@ -55,7 +67,9 @@ brfss %>%
 
 ```
 
-Connecticut, Florida and North Carolina were observed at 7 locations in 2002.
+Connecticut, Florida and North Carolina were observed at 7 locations in 2002.\ 
+Among all the states, they ranked 4th from the highest observations which are from Pennsylvania.\
+The mean observations are 3.2 times.
 
 ## Problem 1_3 Spaghetti plot showing the number of observations in each state from 2002 to 2010s
 
@@ -71,7 +85,6 @@ brfss %>%
       x = "Year",
       y = "Number of Observations"
       ) +
-    theme_bw() +
     theme(legend.position = "right")
 
 brfss %>%
@@ -126,22 +139,66 @@ Across five responses categories, "Very good" had the highest overall proportion
 
 instacart = instacart
 
+# take a brief look at the data structure and variables
+
 skimr::skim(instacart)
 
+# check distinct user IDs
+
+count(distinct(instacart, user_id))
+
+# Find the most popular departments
+
+instacart %>%
+  group_by(department) %>%
+  summarize(n_obs = n()) %>% 
+  arrange(-n_obs) %>% 
+  head(3)
+
+# Find the most popular products
+
+instacart %>%
+  group_by(product_name) %>%
+  summarize(n_obs = n()) %>% 
+  arrange(-n_obs) %>% 
+  head(3)
+
+# check the order day pattern
+
+ggplot(instacart, aes(x = order_dow)) +
+    geom_histogram() +
+    labs(
+      title = "Order Day",
+      x = "Day",
+      y = "Count"
+      )
+
+# check the order time pattern
+
+ggplot(instacart, aes(x = order_hour_of_day)) +
+    geom_histogram() +
+    labs(
+      title = "Order Time",
+      x = "Time",
+      y = "Count"
+      )
 
 ```
 
+The dataset Instacart is a `r ncol(instacart)` by `r nrow(instacart)` table.\
+It contains 4 character variables and 11 numeric variables, and there is no missing data in this dataset.\
+There are 131209 distinct user IDs in total.\
+There are 21 departments, 134 aisles and 39123 unique products in the dataset. The 3 most popular departments are Produce, Dairy eggs and Snacks, while the 3 most popular products are Banana, Bag of Organic Bananas and Organic Strawberries.\
+From the histograms, we can see that the peak day of ordering happens at weekends, and the peak time of odering appears at noon and in the afternnon.</br>
 
-## Problem 2_2  Five-panel plot showing the distribution of state-level averages over time
+## Problem 2_2  How many aisles are there, and which aisles are the most items ordered from?
 
 ```{r Problem 2_2}
-
-
 
 ## How many aisles are there, and which aisles are the most items ordered from?
 
 count(distinct(instacart, aisle_id)) 
-  
+
 instacart %>%
   summarize(n = n_distinct(aisle_id))
 
@@ -149,9 +206,11 @@ instacart %>%
   group_by(aisle) %>%
   summarize(n_obs = n()) %>% 
   arrange(-n_obs) %>% 
-  filter(row_number() == 1)
+  head(3)
 
 ```
+
+There are 134 distinct aisles, and Fresh vegetables have the most items (150609) ordered from. The top 3 aisles are fresh vegetables, fresh fruits and packaged vegetables fruits, indicating people included in this dataset have a relatively healthy diet.
 
 ## Problem 2_3 Make a plot that shows the number of items ordered in each aisle
 
@@ -171,18 +230,24 @@ instacart %>%
       y = "Number of Items Ordered"
       )
 
+
+instacart %>%
+  group_by(aisle) %>%
+  summarize(n_obs = n()) %>% 
+  arrange(n_obs) %>% 
+  View
+
+
 ```
+
+The aisle with the smallest number of items ordered is beauty with 287 orders, while the aisle with the largest number of items ordered is fresh vegetables with 150609 orders.
+
+
 
 ## Problem 2_4 Make a table showing the most popular item in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”
 
 ```{r Problem 2_4}
 
-instacart %>% 
-  filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
-  group_by(aisle, product_name) %>% 
-  summarize(n_obs = n()) %>%
-  summarize(max_product = max(n_obs))
-            
 instacart %>% 
   filter(aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
   group_by(aisle, product_name) %>% 
@@ -212,6 +277,8 @@ instacart %>%
 
 ny_noaa = ny_noaa
 
+skimr::skim(ny_noaa)
+
 ny_noaa = ny_noaa %>% 
   mutate(year = strftime(date, "%Y"),
          month = strftime(date, "%B"),
@@ -224,8 +291,12 @@ ny_noaa = ny_noaa %>%
   select(id, year, month, day, prcp_mm = prcp, snow_mm = snow, snwd_mm = snwd, tmax_c = tmax, tmin_c = tmin)
 
 
-
+ny_noaa %>% 
+  filter()
+  
 ```
+
+
 
 ## Problem 3_2
 
@@ -241,8 +312,8 @@ ny_noaa %>%
   group_by(month) %>% 
   summarize(mean_snow = median(snow_mm, na.rm = TRUE))
 
-
 ```
+
 
 ## Problem 3_3 Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
 
@@ -250,26 +321,20 @@ ny_noaa %>%
 
 ny_noaa %>% 
   filter(month == "January" | month == "July") %>% 
-  group_by(id, month) %>% 
+  group_by(id, year, month) %>% 
   summarize(mean_tmax = mean(tmax_c, na.rm = TRUE)) %>% 
   filter(!is.na(mean_tmax)) %>% 
-  ggplot(aes(x = id, y = mean_tmax)) +
-    geom_point() +
+  ggplot(aes(x = year, y = mean_tmax)) +
+    geom_boxplot() +
     facet_grid(month ~ .) +
-    theme(axis.text.x = element_text(size = 4, hjust = 1, angle = 45)) +
     labs(
       title = "Average Max Temperature in January and in July",
-      x = "Station ID",
+      x = "Month",
       y = "Average Max Temperature"
-      )
+      ) +
+    theme(axis.text.x = element_text(size = 8, hjust = 1, angle = 45))
 
-ny_noaa %>% 
-  filter(month == "January" | month == "July") %>% 
-  group_by(id, month) %>% 
-  summarize(mean_tmax = mean(tmax_c, na.rm = TRUE)) %>% 
-  filter(!is.na(mean_tmax)) %>% 
-  ggplot(aes(x = month, y = mean_tmax)) +
-    geom_boxplot()
+
 
 is_outlier = function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
@@ -317,9 +382,22 @@ snow_dist_p = ny_noaa %>%
                     y = "Snowfall in mm"
                     )
 
+
+
+snow_dist_p = ny_noaa %>% 
+                filter(snow_mm > 0 & snow_mm < 100) %>% 
+                ggplot(aes(x = snow_mm, y = year)) +
+                  geom_density_ridges(scale = 0.85) +
+                  labs(
+                    title = "Distribution of Snowfall",
+                    x = "Snowfall in mm",
+                    y = "Year"
+                    )
+
+
 ```
 
-```{r}
+```{r fig.width = 10, fig.height = 20}
 
 tmax_tmin_p / snow_dist_p
 
